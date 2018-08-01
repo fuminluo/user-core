@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.xdaocloud.framework.mapper.OrganizationMapper">
+	<select id="findAll" parameterType="com.xdaocloud.framework.dto.request.organization.FindAllOrganizationRequest" resultType="com.xdaocloud.framework.dto.response.organization.FindAllResponse">
+		select t.* from
+		t_organization t where t.deleted = false
+		<if test="keyword != null and keyword != ''">
+			AND t.name LIKE
+			CONCAT('%',#{keyword,jdbcType=VARCHAR},'%')
+		</if>
+		<if test="parentId != null">
+			AND t.parent_id = #{parentId}
+		</if>
+		order by t.create_time asc
+	</select>
+
+	<!-- 查询角色拥有的用户 -->
+	<select id="findUserByOrganizationId" parameterType="Long" resultType="com.xdaocloud.framework.dto.response.organization.FindUserByOrganizationIdResponse">
+		SELECT
+		u.id,
+		u.name,
+		IF(
+		(SELECT
+		COUNT(*)
+		FROM
+		t_organization_user t
+		WHERE
+		t.user_id = u.id
+		AND t.organization_id =
+		#{organizationId}) > 0,
+		TRUE,
+		FALSE
+		) AS selected
+		FROM
+		t_user u
+		WHERE u.deleted = false
+	</select>
+</mapper>

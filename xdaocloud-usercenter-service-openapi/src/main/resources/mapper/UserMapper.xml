@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.xdaocloud.framework.mapper.UserMapper">
+    <select id="findAllUser" parameterType="com.xdaocloud.framework.dto.request.user.FindAllUserRequest"
+            resultType="com.xdaocloud.framework.dto.response.user.FindAllUserResponse">
+        select
+        u.id,u.name,u.username,u.sex,u.birthday,u.avatar,u.phone,u.email,u.status,u.last_login_time from t_user u where
+        deleted = false
+        <if test="keyword != null and keyword != ''">
+            AND (u.name LIKE CONCAT('%',#{keyword,jdbcType=VARCHAR},'%')
+            or u.username LIKE CONCAT('%',#{keyword,jdbcType=VARCHAR},'%')
+            or u.nickname LIKE CONCAT('%',#{keyword,jdbcType=VARCHAR},'%'))
+        </if>
+    </select>
+
+    <!-- 查询用户拥有的权限 -->
+    <select id="findPermissionByUserId" parameterType="map"
+            resultType="com.xdaocloud.framework.dto.response.user.FindUserPermissionResponse">
+        SELECT
+        p.*
+        FROM
+        t_permission p
+        WHERE p.`id` IN
+        (SELECT
+        rp.`permission_id`
+        FROM
+        t_user_role ur
+        LEFT JOIN t_role_permission rp
+        ON ur.`role_id` = rp.`role_id`
+        WHERE ur.`user_id` = #{userId})
+        <if test="appId != null and appId != ''">
+            AND p.app_id = #{appId}
+        </if>
+        AND p.deleted = FALSE AND p.status = 1 order by p.sort desc
+    </select>
+
+
+    <select id="getUserRoles" parameterType="java.lang.Long" resultType="java.lang.Object">
+		SELECT name FROM t_role WHERE deleted = FALSE AND id IN ( SELECT role_id FROM t_user_role  WHERE user_id = #{id})
+	</select>
+</mapper>
